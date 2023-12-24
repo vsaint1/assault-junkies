@@ -1,6 +1,7 @@
 #pragma once
 
 #define GAME_NAME "ac_client.exe"
+#define GAME_NAME_W L"ac_client.exe"
 #define MODULE_SIZE 0x001B9000
 #define MODULE_NAME "ac_client.exe"
 
