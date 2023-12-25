@@ -34,8 +34,26 @@ public:
 	}
 
 	template<typename T>
+	T read(uint8_t* address) {
+		return *reinterpret_cast<T*>(address);
+	}
+
+	template<typename T>
 	T read(uintptr_t address) {
 		return *reinterpret_cast<T*>(address);
+	}
+
+	template<>
+	std::string read(uintptr_t address) {
+		std::string str;
+		char ch;
+		do {
+			ch = this->read<char>(address);
+			str += ch;
+			address++;
+		} while (ch != '\0');
+
+		return str;
 	}
 
 	template<typename T>
@@ -44,7 +62,7 @@ public:
 	}
 
 	uint8_t* findSignature(const char* szSignature) noexcept;
-	
+
 	bool patch(uint8_t* address, char* bytes, unsigned int length) noexcept;
 
 };
