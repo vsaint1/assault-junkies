@@ -1,5 +1,5 @@
 #pragma once
-#include <mhook/minhook.h>
+#include <minhook/minhook.h>
 #include <gl/GL.h>
 
 #define GAME_NAME "ac_client.exe"
