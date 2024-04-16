@@ -35,7 +35,7 @@ bool OpenglHook::build_font() {
     return true;
 }
 
-void OpenglHook::draw_line(Vector lvalue, Vector rvalue, const unsigned char color[3]) {
+void OpenglHook::draw_line(Vector3 lvalue, Vector3 rvalue, const unsigned char color[3]) {
 
     glColor3ub(color[0], color[1], color[2]);
     glBegin(GL_LINES);

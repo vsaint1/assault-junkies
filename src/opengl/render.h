@@ -2,11 +2,7 @@
 #include "../utils/macros.h"
 #include <memory>
 #include <vadefs.h>
-
-// @todo: refactor
-struct Vector {
-    float x, y, z;
-};
+#include "../features/math.h"
 
 const GLubyte WHITE[3] = {255, 255, 255};
 
@@ -23,7 +19,7 @@ class OpenglHook {
 
     bool build_font();
 
-    void draw_line(Vector lvalue, Vector rvalue, const unsigned char color[3]);
+    void draw_line(Vector3 lvalue, Vector3 rvalue, const unsigned char color[3]);
 
     void draw_text(int x, int y, const unsigned char color[3], const char *fmt, ...);
 
