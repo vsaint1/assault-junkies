@@ -1,6 +1,6 @@
 add_rules("mode.debug", "mode.release")
 
-add_requires("minhook","imgui","spdlog",{config = {opengl32 = true,win32  =true}})
+add_requires("minhook","spdlog")
 
 set_languages("c++20", "c11")
 
@@ -13,5 +13,6 @@ target("ac_trainer")
     set_arch("x86")
     add_defines("_WIN32")   
     add_files("src/*.cpp","src/**/*.cpp")
+    add_headerfiles("src/*.h","src/**/*.h")
     add_links("user32","opengl32")
-    add_packages("minhook","imgui","spdlog")
+    add_packages("minhook","spdlog")

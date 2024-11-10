@@ -7,8 +7,12 @@
 #include <MinHook.h>
 #include "globals.h"
 
-#define GAME_NAME "ac_client.exe"
-#define GAME_NAME_W L"ac_client.exe"
+#define MODULE_BASE "ac_client.exe"
+#define MODULE_BASE_W L"ac_client.exe"
+
+
+#define JMP 0xE9
+#define NOP 0x90
 
 #ifdef _DEBUG
 #include <spdlog/spdlog.h>
