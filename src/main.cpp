@@ -1,14 +1,57 @@
 #include "mem/memory.h"
+#include "render/opengl_hook.h"
 #include "sdk/player.h"
 #include "sdk/world.h"
-#include "utils.h"
 
 typedef int(__stdcall *wglSwapBuffers)(HDC);
-
 wglSwapBuffers swapBuffers_Original = nullptr;
+
+auto moduleBase = (uintptr_t)GetModuleHandle("ac_client.exe");
+
 int __stdcall wglSwapBuffers_Hook(HDC _hdc) {
 
-    // spdlog::info("Test hook");
+    if (render->GetHdc() != _hdc)
+        render->BuildFont();
+
+    render->SetupOrtho();
+
+    ViewMatrix vm = *(ViewMatrix *)(moduleBase + offsets::VIEWMATRIX);
+
+    uintptr_t *entityList = (uintptr_t *)(moduleBase + offsets::ENTITY_LIST);
+
+    int *playerCount = (int *)(moduleBase + offsets::PLAYER_COUNT);
+
+    CPlayer *localPlayer = (CPlayer *)(moduleBase + offsets::LOCAL_PLAYER);
+
+    // spdlog::info(vm.Debug().str());
+
+    for (size_t i = 0; i < (*playerCount - 1); i++) {
+
+        if (localPlayer == nullptr)
+            continue;
+
+        if (entityList == nullptr)
+            continue;
+
+        uintptr_t *listEntry = (uintptr_t *)(*entityList + (i * 0x4));
+
+        if (listEntry == nullptr)
+            continue;
+
+        CPlayer *entity = (CPlayer *)(*listEntry);
+
+        if (!entity->IsValid())
+            continue;
+
+        auto w2s = entity->GetHeadPos().WorldToScreen(vm, render->GetWidth(), render->GetHeight());
+
+        render->Text({w2s.x - 20, w2s.y - 10}, WHITE, "%s", entity->GetPlayerName());
+
+        spdlog::info("player_name {}, player ({},{},{}), distance {}", std::string(entity->GetPlayerName()), w2s.x, w2s.y, 0, localPlayer->GetPlayerPos().Distance(entity->GetPlayerPos()));
+    }
+
+    render->Restore();
+
     return swapBuffers_Original(_hdc);
 }
 
@@ -18,40 +61,27 @@ static DWORD __stdcall FakeEntry(HMODULE _hModule) {
     AllocConsole();
     freopen_s(&file, "CONOUT$", "w", stdout);
 
-    auto moduleBase = (uintptr_t)GetModuleHandle("ac_client.exe");
     spdlog::info("Test ac_base {:#0x}", moduleBase);
 
-    int playerCount = *(int *)(moduleBase + offsets::PLAYER_COUNT);
+    // MH_Initialize();
 
-    CPlayer *localPlayer = *(CPlayer **)(moduleBase + offsets::LOCAL_PLAYER);
+    // if (MH_CreateHookApi(L"opengl32.dll", "wglSwapBuffers", (void **)&wglSwapBuffers_Hook, (void **)&swapBuffers_Original) != MH_OK)
+    //     spdlog::error("Failed to hook wglSwapBuffers");
 
-    MH_Initialize();
+    // MH_EnableHook(MH_ALL_HOOKS);
 
-
-    if (MH_CreateHookApi(L"opengl32.dll", "wglSwapBuffers", (void **)&wglSwapBuffers_Hook, (void **)&swapBuffers_Original) != MH_OK)
-        spdlog::error("Failed to hook wglSwapBuffers");
-
-    MH_EnableHook(MH_ALL_HOOKS);
-
-    // swapBuffers_Original = (wglSwapBuffers)GetProcAddress(GetModuleHandleA("opengl32.dll"), "wglSwapBuffers");
-    // swapBuffers_Original = (wglSwapBuffers)memory::Trampoline((char *)swapBuffers_Original, (char *)wglSwapBuffers_Hook, 5);
-
-    // memory::Write<int>(moduleBase + offsets::WORLD,20);
+    swapBuffers_Original = (wglSwapBuffers)GetProcAddress(GetModuleHandleA("opengl32.dll"), "wglSwapBuffers");
+    swapBuffers_Original = (wglSwapBuffers)memory::Trampoline((char *)swapBuffers_Original, (char *)wglSwapBuffers_Hook, 5);
 
     while (!GetAsyncKeyState(VK_END)) {
-
-        if (localPlayer == nullptr)
-            continue;
-
-        int world = *(int *)(moduleBase + offsets::WORLD);
-
-        spdlog::info("Health {}, LocalPlayer name {}, weapon name {}, type {}, TeamAreEnemies {}, \n GameMode {}", localPlayer->GetHealth(), localPlayer->GetPlayerName(), localPlayer->GetWeaponName(), localPlayer->GetWeaponType(), CWorld::TeamAreEnemies(world), CWorld::GetGameModeName(world));
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    MH_DisableHook(MH_ALL_HOOKS);
-    MH_Uninitialize();
+    /*  MH_DisableHook(MH_ALL_HOOKS);
+      MH_Uninitialize();*/
+    VirtualFree(swapBuffers_Original, 0, MEM_RELEASE);
+
     fclose(file);
     FreeConsole();
     FreeLibraryAndExitThread(_hModule, 0);
