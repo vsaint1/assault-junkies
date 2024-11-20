@@ -2,7 +2,7 @@
 #define WORLD_H
 #include <cstdint>
 
-class CWorld {
+class CGameMode {
 
   public:
     static bool TeamAreEnemies(int32_t _mode) {

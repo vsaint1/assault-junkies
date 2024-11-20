@@ -8,6 +8,9 @@
 
 constexpr const float PI = 3.14159265358979323846f;
 
+#define DEG2RAD(x) ((x) * (PI / 180.0f))
+#define RAD2DEG(x) ((x) * (180.0f / PI))
+
 struct ViewMatrix {
     float matrix[16];
 
@@ -24,6 +27,12 @@ struct ViewMatrix {
     }
 };
 
+struct Vec3 {
+    float x, y, z;
+};
+struct Vec2 {
+    float x, y;
+};
 struct Vector4 {
     float x, y, z, w;
 };
@@ -34,6 +43,13 @@ struct Vector2 {
     constexpr const bool IsZero() const noexcept { return x == 0.f && y == 0.f; }
 
     constexpr const bool Invalid() const noexcept { return !x || !y; }
+
+    constexpr const Vector2 &operator-(const Vector2 &other) const noexcept { return Vector2{x - other.x, y - other.y}; }
+
+    float Distance(const Vector2 &other) const noexcept {
+        const Vector2 diff = *this - other;
+        return sqrtf(diff.x * diff.x + diff.y * diff.y);
+    }
 };
 
 struct Vector3 {
@@ -80,7 +96,7 @@ struct Vector3 {
         clip.w = this->x * view.matrix[3] + this->y * view.matrix[7] + this->z * view.matrix[11] + view.matrix[15];
 
         if (clip.w < 0.1f) {
-            return {-1, -1};
+            return {0, 0};
         }
 
         Vector3 NDC;
@@ -92,7 +108,7 @@ struct Vector3 {
         screen.x = (wW / 2 * NDC.x) + (NDC.x + wW / 2);
         screen.y = -(wH / 2 * NDC.y) + (NDC.y + wH / 2);
 
-        return screen;
+        return {screen.x, screen.y};
     }
 };
 

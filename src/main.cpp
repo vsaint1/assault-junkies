@@ -1,12 +1,11 @@
 #include "mem/memory.h"
-#include "render/opengl_hook.h"
+#include "render/opengl_render.h"
+#include "sdk/aim/aimbot.h"
 #include "sdk/player.h"
 #include "sdk/world.h"
 
 typedef int(__stdcall *wglSwapBuffers)(HDC);
 wglSwapBuffers swapBuffers_Original = nullptr;
-
-auto moduleBase = (uintptr_t)GetModuleHandle("ac_client.exe");
 
 int __stdcall wglSwapBuffers_Hook(HDC _hdc) {
 
@@ -15,39 +14,64 @@ int __stdcall wglSwapBuffers_Hook(HDC _hdc) {
 
     render->SetupOrtho();
 
-    ViewMatrix vm = *(ViewMatrix *)(moduleBase + offsets::VIEWMATRIX);
+    globals::vm = *(ViewMatrix *)(globals::moduleBase + offsets::VIEWMATRIX);
 
-    uintptr_t *entityList = (uintptr_t *)(moduleBase + offsets::ENTITY_LIST);
+    globals::entityList = (uintptr_t *)(globals::moduleBase + offsets::ENTITY_LIST);
 
-    int *playerCount = (int *)(moduleBase + offsets::PLAYER_COUNT);
-
-    CPlayer *localPlayer = (CPlayer *)(moduleBase + offsets::LOCAL_PLAYER);
+    globals::world = (CWorld *)(globals::moduleBase + offsets::LOCAL_PLAYER);
 
     // spdlog::info(vm.Debug().str());
 
-    for (size_t i = 0; i < (*playerCount - 1); i++) {
+    if (GetAsyncKeyState(VK_RBUTTON)) {
 
-        if (localPlayer == nullptr)
+        auto ent = aimbot::GetBestTarget();
+
+        if (ent != nullptr) {
+
+            auto angleTo = aimbot::CalcAngle(globals::world->localPlayer->GetHeadPos(), ent->GetHeadPos());
+
+            globals::world->localPlayer->SetViewAngles(angleTo);
+        }
+    }
+
+    for (size_t i = 0; i < (globals::world->playerCount - 1); i++) {
+
+        if (globals::world->localPlayer == nullptr)
             continue;
 
-        if (entityList == nullptr)
+        if (globals::entityList == nullptr)
             continue;
 
-        uintptr_t *listEntry = (uintptr_t *)(*entityList + (i * 0x4));
+        uintptr_t *listEntry = (uintptr_t *)(*globals::entityList + (i * sizeof(void *)));
 
         if (listEntry == nullptr)
             continue;
 
-        CPlayer *entity = (CPlayer *)(*listEntry);
+        CEntity *entity = (CEntity *)(*listEntry);
 
         if (!entity->IsValid())
             continue;
 
-        auto w2s = entity->GetHeadPos().WorldToScreen(vm, render->GetWidth(), render->GetHeight());
+        if (!entity->IsAlive())
+            continue;
 
-        render->Text({w2s.x - 20, w2s.y - 10}, WHITE, "%s", entity->GetPlayerName());
+        auto headPos = entity->GetHeadPos().WorldToScreen(globals::vm, render->GetWidth(), render->GetHeight());
 
-        spdlog::info("player_name {}, player ({},{},{}), distance {}", std::string(entity->GetPlayerName()), w2s.x, w2s.y, 0, localPlayer->GetPlayerPos().Distance(entity->GetPlayerPos()));
+        auto screenPos = entity->GetPlayerPos().WorldToScreen(globals::vm, render->GetWidth(), render->GetHeight());
+
+        //     auto mode = (uintptr_t *)(globals::moduleBase + offsets::WORLD);
+
+        if (configs::esp::enabled) {
+
+            if (entity->IsEnemy(globals::world->localPlayer)) {
+
+                render->DrawLine({render->GetWidth() / 2, render->GetHeight() / 2}, headPos);
+
+                render->Text({headPos.x, headPos.y - 5}, WHITE, "%s", entity->GetPlayerName());
+
+                render->DrawRect(screenPos, headPos, RED);
+            }
+        }
     }
 
     render->Restore();
@@ -61,14 +85,9 @@ static DWORD __stdcall FakeEntry(HMODULE _hModule) {
     AllocConsole();
     freopen_s(&file, "CONOUT$", "w", stdout);
 
-    spdlog::info("Test ac_base {:#0x}", moduleBase);
+    globals::moduleBase = (uintptr_t)GetModuleHandle("ac_client.exe");
 
-    // MH_Initialize();
-
-    // if (MH_CreateHookApi(L"opengl32.dll", "wglSwapBuffers", (void **)&wglSwapBuffers_Hook, (void **)&swapBuffers_Original) != MH_OK)
-    //     spdlog::error("Failed to hook wglSwapBuffers");
-
-    // MH_EnableHook(MH_ALL_HOOKS);
+    spdlog::info("base ac_client.exe {:#0x}", globals::moduleBase);
 
     swapBuffers_Original = (wglSwapBuffers)GetProcAddress(GetModuleHandleA("opengl32.dll"), "wglSwapBuffers");
     swapBuffers_Original = (wglSwapBuffers)memory::Trampoline((char *)swapBuffers_Original, (char *)wglSwapBuffers_Hook, 5);
@@ -78,12 +97,9 @@ static DWORD __stdcall FakeEntry(HMODULE _hModule) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    /*  MH_DisableHook(MH_ALL_HOOKS);
-      MH_Uninitialize();*/
-    VirtualFree(swapBuffers_Original, 0, MEM_RELEASE);
-
     fclose(file);
     FreeConsole();
+
     FreeLibraryAndExitThread(_hModule, 0);
 }
 

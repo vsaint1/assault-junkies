@@ -10,7 +10,6 @@
 #define MODULE_BASE "ac_client.exe"
 #define MODULE_BASE_W L"ac_client.exe"
 
-
 #define JMP 0xE9
 #define NOP 0x90
 

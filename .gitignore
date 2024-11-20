@@ -5,6 +5,7 @@ build/
 # MacOS Cache
 .DS_Store
 
+vsxmake2022/
 
 .vscode/
 

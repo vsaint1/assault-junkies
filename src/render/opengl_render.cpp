@@ -1,6 +1,7 @@
-#include "opengl_hook.h"
+#include "opengl_render.h"
 
-bool Render::BuildFont() {
+bool Render::BuildFont()
+{
     const auto RANGE = 96;
     this->hdc = wglGetCurrentDC();
     this->base = glGenLists(RANGE);
@@ -13,16 +14,18 @@ bool Render::BuildFont() {
     return true;
 }
 
-void Render::Text(Vector2 pos, const unsigned char color[3], const char *fmt, ...) {
+void Render::Text(Vector2 pos, const unsigned char color[3], const char *fmt, ...)
+{
     glColor3ub(color[0], color[1], color[2]);
 
-    glRasterPos2i(pos.x, pos.y);
     char text[128];
     char *args;
 
     __crt_va_start(args, fmt);
     vsprintf_s(text, 128, fmt, args);
     __crt_va_end(args);
+    
+    glRasterPos2i(pos.x + strlen(text), pos.y);
 
     glPushAttrib(GL_LIST_BIT);
     glListBase(base - 32);
@@ -30,28 +33,34 @@ void Render::Text(Vector2 pos, const unsigned char color[3], const char *fmt, ..
     glPopAttrib();
 }
 
-void Render::DrawLine(Vector2 v1, Vector2 v2, const unsigned char color[3]) {
+void Render::DrawLine(Vector2 v1, Vector2 v2, const unsigned char color[3], float lineWidth)
+{
+    glLineWidth(lineWidth);
     glColor3ub(color[0], color[1], color[2]);
     glBegin(GL_LINES);
-    glVertex2f(v1.x, v2.y);
-    glVertex2f(v1.x, v2.y);
+    glVertex2f(v1.x, v1.y);
+    glVertex2f(v2.x, v2.y);
     glEnd();
 }
 
-void Render::DrawOutlineRect(Vector2 screen, float lineWidth, const unsigned char color[3]) {
+void Render::DrawRect(Vector2 screenPlayerPos, Vector2 headScreenPos, const unsigned char color[3], float lineWidth)
+{
 
-    glLineWidth(lineWidth);
-    glBegin(GL_LINE_STRIP);
-    glColor3ub(color[0], color[1], color[2]);
-    glVertex2f(screen.x - 0.5f, screen.y - 0.5f);
-    glVertex2f(screen.x + this->GetWidth() + 0.5f, screen.y - 0.5f);
-    glVertex2f(screen.x + this->GetWidth() + 0.5f, screen.y + this->GetHeight() + 0.5f);
-    glVertex2f(screen.x - 0.5f, screen.y + this->GetHeight() + 0.5f);
-    glVertex2f(screen.x - 0.5f, screen.y + this->GetHeight() - 0.5f);
-    glEnd();
+    float rectWidth = 50.0f;
+
+    Vector2 topLeft = {headScreenPos.x - rectWidth / 2, headScreenPos.y};
+    Vector2 topRight = {headScreenPos.x + rectWidth / 2, headScreenPos.y};
+    Vector2 bottomLeft = {screenPlayerPos.x - rectWidth / 2, screenPlayerPos.y};
+    Vector2 bottomRight = {screenPlayerPos.x + rectWidth / 2, screenPlayerPos.y};
+
+    DrawLine(topLeft, topRight, color, lineWidth);       // Top edge
+    DrawLine(topRight, bottomRight, color, lineWidth);   // Right edge
+    DrawLine(bottomRight, bottomLeft, color, lineWidth); // Bottom edge
+    DrawLine(bottomLeft, topLeft, color, lineWidth);     // Left edge
 }
 
-void Render::SetupOrtho() {
+void Render::SetupOrtho()
+{
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glPushMatrix();
@@ -65,7 +74,8 @@ void Render::SetupOrtho() {
     glDisable(GL_DEPTH_TEST);
 }
 
-void Render::Restore() {
+void Render::Restore()
+{
     glPopMatrix();
     glPopAttrib();
 }
