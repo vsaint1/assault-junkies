@@ -41,6 +41,6 @@ class Render {
     GLuint base;
 };
 
-inline auto render = std::make_unique<Render>(16, "Calibri");
+inline auto render = std::make_unique<Render>(10, "Calibri");
 
 #endif // OPENGL_RENDER_H

@@ -89,6 +89,8 @@ class CEntity {
         return (char *)"UNKNOWN_TYPE";
     }
 
+    int32_t GetHealth() { return health; }
+    
     CWeapon *GetWeapon() { return weapon; }
 
     bool IsAlive() { return health > 0 && health <= 100; }

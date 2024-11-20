@@ -1,7 +1,6 @@
 #include "opengl_render.h"
 
-bool Render::BuildFont()
-{
+bool Render::BuildFont() {
     const auto RANGE = 96;
     this->hdc = wglGetCurrentDC();
     this->base = glGenLists(RANGE);
@@ -14,8 +13,7 @@ bool Render::BuildFont()
     return true;
 }
 
-void Render::Text(Vector2 pos, const unsigned char color[3], const char *fmt, ...)
-{
+void Render::Text(Vector2 pos, const unsigned char color[3], const char *fmt, ...) {
     glColor3ub(color[0], color[1], color[2]);
 
     char text[128];
@@ -24,8 +22,8 @@ void Render::Text(Vector2 pos, const unsigned char color[3], const char *fmt, ..
     __crt_va_start(args, fmt);
     vsprintf_s(text, 128, fmt, args);
     __crt_va_end(args);
-    
-    glRasterPos2i(pos.x + strlen(text), pos.y);
+
+    glRasterPos2i(pos.x - strlen(text) - 20.f, pos.y);
 
     glPushAttrib(GL_LIST_BIT);
     glListBase(base - 32);
@@ -33,8 +31,7 @@ void Render::Text(Vector2 pos, const unsigned char color[3], const char *fmt, ..
     glPopAttrib();
 }
 
-void Render::DrawLine(Vector2 v1, Vector2 v2, const unsigned char color[3], float lineWidth)
-{
+void Render::DrawLine(Vector2 v1, Vector2 v2, const unsigned char color[3], float lineWidth) {
     glLineWidth(lineWidth);
     glColor3ub(color[0], color[1], color[2]);
     glBegin(GL_LINES);
@@ -43,8 +40,7 @@ void Render::DrawLine(Vector2 v1, Vector2 v2, const unsigned char color[3], floa
     glEnd();
 }
 
-void Render::DrawRect(Vector2 screenPlayerPos, Vector2 headScreenPos, const unsigned char color[3], float lineWidth)
-{
+void Render::DrawRect(Vector2 screenPlayerPos, Vector2 headScreenPos, const unsigned char color[3], float lineWidth) {
 
     float rectWidth = 50.0f;
 
@@ -59,8 +55,7 @@ void Render::DrawRect(Vector2 screenPlayerPos, Vector2 headScreenPos, const unsi
     DrawLine(bottomLeft, topLeft, color, lineWidth);     // Left edge
 }
 
-void Render::SetupOrtho()
-{
+void Render::SetupOrtho() {
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glPushMatrix();
@@ -74,8 +69,7 @@ void Render::SetupOrtho()
     glDisable(GL_DEPTH_TEST);
 }
 
-void Render::Restore()
-{
+void Render::Restore() {
     glPopMatrix();
     glPopAttrib();
 }

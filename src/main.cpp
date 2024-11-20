@@ -65,9 +65,11 @@ int __stdcall wglSwapBuffers_Hook(HDC _hdc) {
 
             if (entity->IsEnemy(globals::world->localPlayer)) {
 
-                render->DrawLine({render->GetWidth() / 2, render->GetHeight() / 2}, headPos);
+                render->DrawLine({render->GetWidth() / 2, 0}, headPos);
 
                 render->Text({headPos.x, headPos.y - 5}, WHITE, "%s", entity->GetPlayerName());
+
+                render->Text({screenPos.x + 100.f / 2, screenPos.y}, WHITE, "%d", entity->GetHealth());
 
                 render->DrawRect(screenPos, headPos, RED);
             }
