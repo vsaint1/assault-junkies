@@ -9,6 +9,8 @@ wglSwapBuffers swapBuffers_Original = nullptr;
 
 int __stdcall wglSwapBuffers_Hook(HDC _hdc) {
 
+    globals::viewport = {render->GetWidth(), render->GetHeight()};
+
     if (render->GetHdc() != _hdc)
         render->BuildFont();
 
@@ -22,15 +24,40 @@ int __stdcall wglSwapBuffers_Hook(HDC _hdc) {
 
     // spdlog::info(vm.Debug().str());
 
-    if (GetAsyncKeyState(VK_RBUTTON)) {
+    render->DrawCircle({globals::viewport.x / 2, globals::viewport.y / 2}, configs::aimbot::fov * 2, WHITE);
 
+    if (GetAsyncKeyState(configs::aimbot::key)) {
         auto ent = aimbot::GetBestTarget();
 
         if (ent != nullptr) {
 
-            auto angleTo = aimbot::CalcAngle(globals::world->localPlayer->GetHeadPos(), ent->GetHeadPos());
+            auto angleTo = aimbot::CalcAngle(globals::world->localPlayer->GetPlayerPos(), ent->GetPlayerPos());
 
-            globals::world->localPlayer->SetViewAngles(angleTo);
+            if (configs::aimbot::bones[configs::aimbot::bone_id].compare("head") == 0)
+                angleTo = aimbot::CalcAngle(globals::world->localPlayer->GetHeadPos(), ent->GetHeadPos());
+
+            auto currentAngle = globals::world->localPlayer->GetViewAngles();
+
+            auto dist = abs(angleTo.Distance(currentAngle));
+
+            const unsigned char *P_COLOR = dist <= configs::aimbot::fov ? GREEN : RED;
+
+            bool isOnFov = fabs(dist - configs::aimbot::fov) < 0.1f;
+
+            spdlog::info("FOV: {}, isInFov: {}", dist, isOnFov);
+
+            render->Text({render->GetWidth() / 2, render->GetHeight() / 2 - 50}, WHITE, "FOV: %.2f, Enemy Distance: %.2f", configs::aimbot::fov, dist);
+
+            if (dist <= configs::aimbot::fov) {
+                if (configs::aimbot::smooth < 1.f) {
+                    globals::world->localPlayer->SetViewAngles(angleTo);
+
+                } else {
+                    currentAngle.x += (angleTo.x - currentAngle.x) / configs::aimbot::smooth;
+                    currentAngle.y += (angleTo.y - currentAngle.y) / configs::aimbot::smooth;
+                    globals::world->localPlayer->SetViewAngles(currentAngle);
+                }
+            }
         }
     }
 
@@ -91,6 +118,11 @@ static DWORD __stdcall FakeEntry(HMODULE _hModule) {
 
     spdlog::info("base ac_client.exe {:#0x}", globals::moduleBase);
 
+    // MH_Initialize();
+    // MH_CreateHookApi(L"opengl32.dll", "wglSwapBuffers", (void *)wglSwapBuffers_Hook, (void **)&swapBuffers_Original);
+
+    // MH_EnableHook(MH_ALL_HOOKS);
+
     swapBuffers_Original = (wglSwapBuffers)GetProcAddress(GetModuleHandleA("opengl32.dll"), "wglSwapBuffers");
     swapBuffers_Original = (wglSwapBuffers)memory::Trampoline((char *)swapBuffers_Original, (char *)wglSwapBuffers_Hook, 5);
 
@@ -98,6 +130,9 @@ static DWORD __stdcall FakeEntry(HMODULE _hModule) {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    // MH_DisableHook(MH_ALL_HOOKS);
+    // MH_Uninitialize();
 
     fclose(file);
     FreeConsole();
@@ -115,6 +150,11 @@ BOOL APIENTRY DllMain(HMODULE _hModule, DWORD ul_reason_for_call, LPVOID _lpRese
 
         if (hThread)
             CloseHandle(hThread);
+    }
+
+    if (ul_reason_for_call == DLL_PROCESS_DETACH) {
+
+        return TRUE;
     }
 
     return TRUE;

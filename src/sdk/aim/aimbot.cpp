@@ -21,6 +21,9 @@ CEntity *aimbot::GetBestTarget() {
             continue;
         }
 
+        if (entity->GetPlayerPos().WorldToScreen(globals::vm, globals::viewport.x, globals::viewport.y).IsZero())
+            continue;
+
         if (!entity->IsValid() || !entity->IsAlive() || !entity->IsEnemy(globals::world->localPlayer)) {
             continue;
         }
@@ -46,7 +49,7 @@ Vector2 aimbot::CalcAngle(Vector3 src, Vector3 dst) {
     angle.x = -atan2f(delta.x, delta.y) / PI * 180.0f + 180.0f;
 
     float hyp = sqrtf(delta.x * delta.x + delta.y * delta.y);
-    angle.y = RAD2DEG(asinf(delta.z / src.Distance(dst))); 
+    angle.y = RAD2DEG(asinf(delta.z / src.Distance(dst)));
 
     return angle;
 }

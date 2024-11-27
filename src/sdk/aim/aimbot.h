@@ -2,6 +2,7 @@
 #define AIMBOT_H
 
 #include "../player.h"
+#include "../../globals.h"
 
 #define MAX_PITCH 180.0f
 

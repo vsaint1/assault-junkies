@@ -30,9 +30,7 @@ struct ViewMatrix {
 struct Vec3 {
     float x, y, z;
 };
-struct Vec2 {
-    float x, y;
-};
+
 struct Vector4 {
     float x, y, z, w;
 };
@@ -45,7 +43,10 @@ struct Vector2 {
     constexpr const bool Invalid() const noexcept { return !x || !y; }
 
     constexpr const Vector2 &operator-(const Vector2 &other) const noexcept { return Vector2{x - other.x, y - other.y}; }
-
+    constexpr const Vector2 &operator/(const float factor) const noexcept { return Vector2{x / factor, y / factor}; }
+    
+    float Length() const noexcept { return sqrtf(x * x + y * y); }
+    
     float Distance(const Vector2 &other) const noexcept {
         const Vector2 diff = *this - other;
         return sqrtf(diff.x * diff.x + diff.y * diff.y);

@@ -4,7 +4,7 @@
 #include "sdk/math.h"
 #include "sdk/player.h"
 #include <cstdint>
-
+#include <map>
 class CWorld;
 
 namespace globals{
@@ -13,6 +13,7 @@ inline uintptr_t moduleBase;
 inline uintptr_t *entityList = nullptr;
 inline CWorld *world = nullptr;
 inline ViewMatrix vm;
+inline Vector2 viewport = { 0, 0 };
 
 
 }
@@ -21,7 +22,11 @@ namespace configs {
 
 namespace aimbot {
 inline bool enabled = true;
-inline float fov = 0.0f;
+inline float fov = 30.0f;
+inline float smooth = 20.0f;
+inline char key = VK_RBUTTON;
+inline int bone_id = 0;
+inline std::map<int, std::string> bones = { {0, "head"}, {1, "chest"}, {2, "stomach"}, {3, "pelvis"} };
 } // namespace aimbot
 namespace esp {
 inline bool enabled = true;

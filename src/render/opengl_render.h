@@ -23,7 +23,9 @@ class Render {
 
     void DrawLine(Vector2 v1, Vector2 v2, const unsigned char color[3] = WHITE, float lineWidth = 1.0f);
 
-    void DrawRect(Vector2 screenPlayerPos, Vector2 screenHeadPos, const unsigned char color[3] = WHITE, float lineWidth = 1.0f);
+    void DrawRect(Vector2 screenPlayerPos, Vector2 screenHeadPos, const unsigned char color[3] = WHITE,float lineWidth = 1.0f);
+
+    void DrawCircle(Vector2 pos, float radius, const unsigned char color[3] = WHITE,int segments = 360, float lineWidth = 1.0f);
 
     void SetupOrtho();
 

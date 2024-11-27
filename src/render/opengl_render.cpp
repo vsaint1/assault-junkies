@@ -42,7 +42,7 @@ void Render::DrawLine(Vector2 v1, Vector2 v2, const unsigned char color[3], floa
 
 void Render::DrawRect(Vector2 screenPlayerPos, Vector2 headScreenPos, const unsigned char color[3], float lineWidth) {
 
-    float rectWidth = 50.0f;
+    float rectWidth = 40.0f;
 
     Vector2 topLeft = {headScreenPos.x - rectWidth / 2, headScreenPos.y};
     Vector2 topRight = {headScreenPos.x + rectWidth / 2, headScreenPos.y};
@@ -53,6 +53,20 @@ void Render::DrawRect(Vector2 screenPlayerPos, Vector2 headScreenPos, const unsi
     DrawLine(topRight, bottomRight, color, lineWidth);   // Right edge
     DrawLine(bottomRight, bottomLeft, color, lineWidth); // Bottom edge
     DrawLine(bottomLeft, topLeft, color, lineWidth);     // Left edge
+}
+
+void Render::DrawCircle(Vector2 pos, float radius, const unsigned char color[3],int segments, float lineWidth) {
+
+    glColor3ub(color[0], color[1], color[2]);
+    glLineWidth(lineWidth);
+
+    glBegin(GL_LINE_LOOP);
+    for (int i = 0; i < segments; i++) {
+        float angle = i * 2.0f * PI / segments;
+        glVertex2f(pos.x + radius * cos(angle), pos.y + radius * sin(angle));
+    }
+
+    glEnd();
 }
 
 void Render::SetupOrtho() {
