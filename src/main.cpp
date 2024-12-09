@@ -24,6 +24,14 @@ int __stdcall wglSwapBuffers_Hook(HDC _hdc) {
 
     // spdlog::info(vm.Debug().str());
 
+    globals::world->localPlayer->GetWeapon()->data->damage = 256;
+    globals::world->localPlayer->GetWeapon()->data->delay = 0;
+    globals::world->localPlayer->GetWeapon()->data->reload = 0;
+    globals::world->localPlayer->GetWeapon()->data->spread = 0;
+    globals::world->localPlayer->GetWeapon()->data->impulse = 0;
+    globals::world->localPlayer->GetWeapon()->data->recoilX = 0;
+    globals::world->localPlayer->GetWeapon()->data->recoilY = 0;
+
     render->DrawCircle({globals::viewport.x / 2, globals::viewport.y / 2}, configs::aimbot::fov * 2, WHITE);
 
     if (GetAsyncKeyState(configs::aimbot::key)) {
@@ -38,15 +46,9 @@ int __stdcall wglSwapBuffers_Hook(HDC _hdc) {
 
             auto currentAngle = globals::world->localPlayer->GetViewAngles();
 
-            auto dist = abs(angleTo.Distance(currentAngle));
+            auto head2D = ent->GetHeadPos().WorldToScreen(globals::vm, globals::viewport.x, globals::viewport.y);
 
-            const unsigned char *P_COLOR = dist <= configs::aimbot::fov ? GREEN : RED;
-
-            bool isOnFov = fabs(dist - configs::aimbot::fov) < 0.1f;
-
-            spdlog::info("FOV: {}, isInFov: {}", dist, isOnFov);
-
-            render->Text({render->GetWidth() / 2, render->GetHeight() / 2 - 50}, WHITE, "FOV: %.2f, Enemy Distance: %.2f", configs::aimbot::fov, dist);
+            auto dist = abs(head2D.Distance({render->GetWidth() / 2, render->GetHeight() / 2}));
 
             if (dist <= configs::aimbot::fov) {
                 if (configs::aimbot::smooth < 1.f) {
@@ -118,21 +120,21 @@ static DWORD __stdcall FakeEntry(HMODULE _hModule) {
 
     spdlog::info("base ac_client.exe {:#0x}", globals::moduleBase);
 
-    // MH_Initialize();
-    // MH_CreateHookApi(L"opengl32.dll", "wglSwapBuffers", (void *)wglSwapBuffers_Hook, (void **)&swapBuffers_Original);
+    MH_Initialize();
+    MH_CreateHookApi(L"opengl32.dll", "wglSwapBuffers", (void *)wglSwapBuffers_Hook, (void **)&swapBuffers_Original);
 
-    // MH_EnableHook(MH_ALL_HOOKS);
+    MH_EnableHook(MH_ALL_HOOKS);
 
-    swapBuffers_Original = (wglSwapBuffers)GetProcAddress(GetModuleHandleA("opengl32.dll"), "wglSwapBuffers");
-    swapBuffers_Original = (wglSwapBuffers)memory::Trampoline((char *)swapBuffers_Original, (char *)wglSwapBuffers_Hook, 5);
+    // swapBuffers_Original = (wglSwapBuffers)GetProcAddress(GetModuleHandleA("opengl32.dll"), "wglSwapBuffers");
+    // swapBuffers_Original = (wglSwapBuffers)memory::Trampoline((char *)swapBuffers_Original, (char *)wglSwapBuffers_Hook, 5);
 
     while (!GetAsyncKeyState(VK_END)) {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    // MH_DisableHook(MH_ALL_HOOKS);
-    // MH_Uninitialize();
+    MH_DisableHook(MH_ALL_HOOKS);
+    MH_Uninitialize();
 
     fclose(file);
     FreeConsole();

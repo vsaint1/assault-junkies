@@ -22,8 +22,8 @@ namespace configs {
 
 namespace aimbot {
 inline bool enabled = true;
-inline float fov = 30.0f;
-inline float smooth = 20.0f;
+inline float fov = 100.0f;
+inline float smooth = 0.0f;
 inline char key = VK_RBUTTON;
 inline int bone_id = 0;
 inline std::map<int, std::string> bones = { {0, "head"}, {1, "chest"}, {2, "stomach"}, {3, "pelvis"} };
